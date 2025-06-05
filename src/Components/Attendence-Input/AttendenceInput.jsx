@@ -344,7 +344,7 @@ export default function AttendanceInput() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div 
-            className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300 animate-in fade-in"
+            className="absolute inset-0 bg-black/50   transition-opacity duration-300 animate-in fade-in"
             onClick={closeModal}
           ></div>
           
@@ -444,7 +444,7 @@ export default function AttendanceInput() {
       {showBulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div 
-            className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300 animate-in fade-in"
+            className="absolute inset-0 bg-black/50   transition-opacity duration-300 animate-in fade-in"
             onClick={closeBulkModal}
           ></div>
           
@@ -540,7 +540,7 @@ export default function AttendanceInput() {
       {showHistoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div 
-            className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300 animate-in fade-in"
+            className="absolute inset-0 bg-black/50   transition-opacity duration-300 animate-in fade-in"
             onClick={closeHistoryModal}
           ></div>
           
