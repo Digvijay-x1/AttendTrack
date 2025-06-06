@@ -9,10 +9,15 @@ import {
   Settings, 
   LogOut,
   User,
-  Radius
+  Radius,
+  Sun,
+  Moon
 } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 const Navbar = () => {
+  const { user, theme, toggleTheme, sidebarOpen, toggleSidebar } = useApp();
+  
   const menuItems = [
     { 
       icon: LayoutDashboard, 
@@ -52,16 +57,27 @@ const Navbar = () => {
   ];
 
   return (
-   
-    <div className="w-63 h-screen  border-r border-gray-200 flex flex-col">
+    <div className={`${sidebarOpen ? 'w-63' : 'w-20'} h-screen border-r border-gray-200 flex flex-col transition-all duration-300`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 ">
+      <div className="p-6 border-b border-gray-200 flex justify-between items-center">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">AT</span>
           </div>
-          <h1 className="text-xl font-semibold text-gray-900">AttendTrack</h1>
+          {sidebarOpen && <h1 className="text-xl font-semibold text-gray-900">AttendTrack</h1>}
         </div>
+        
+        {/* Theme toggle button */}
+        <button 
+          onClick={toggleTheme} 
+          className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          {theme === 'dark' ? (
+            <Sun size={18} className="text-gray-600" />
+          ) : (
+            <Moon size={18} className="text-gray-600" />
+          )}
+        </button>
       </div>
 
       {/* Navigation Menu */}
@@ -74,7 +90,7 @@ const Navbar = () => {
                 <NavLink
                   to={item.href}
                   className={({ isActive }) =>
-                    `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
+                    `flex items-center ${sidebarOpen ? 'space-x-3 justify-start px-4' : 'justify-center'} py-3 rounded-lg transition-colors duration-200 ${
                       isActive
                         ? 'bg-gray-700 text-white'
                         : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
@@ -87,7 +103,7 @@ const Navbar = () => {
                         size={20} 
                         className={isActive ? 'text-white' : 'text-gray-500'}
                       />
-                      <span className="font-medium">{item.label}</span>
+                      {sidebarOpen && <span className="font-medium">{item.label}</span>}
                     </>
                   )}
                 </NavLink>
@@ -99,24 +115,38 @@ const Navbar = () => {
 
       {/* User Profile Section */}
       <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center">
-            <User size={16} className="text-white" />
+        <div className={`flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} mb-4`}>
+          <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden">
+            {user.profileImage ? (
+              <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <User size={16} className="w-full h-full p-2 text-gray-600" />
+            )}
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">John Doe</p>
-            <p className="text-xs text-gray-500">john.doe@college.edu</p>
-          </div>
+          {sidebarOpen && (
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">{user.name}</p>
+              <p className="text-xs text-gray-500">{user.email}</p>
+            </div>
+          )}
         </div>
         
+        {/* Toggle sidebar button */}
+        <button 
+          onClick={toggleSidebar}
+          className={`mb-2 w-full ${sidebarOpen ? 'bg-gray-100 justify-between px-4' : 'justify-center'} flex items-center py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors duration-200`}
+        >
+          <Radius size={16} className="text-gray-600" />
+          {sidebarOpen && <span className="font-medium">Toggle Sidebar</span>}
+        </button>
+        
         {/* Logout Button */}
-        <button className="w-full bg-gray-50 flex items-center justify-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors duration-200 border-2 border-gray-200" >
+        <button className={`w-full bg-gray-50 flex items-center ${sidebarOpen ? 'justify-start space-x-2 px-4' : 'justify-center'} py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors duration-200 border-2 border-gray-200`} >
           <LogOut size={16} />
-          <span className="font-medium">Logout</span>
+          {sidebarOpen && <span className="font-medium">Logout</span>}
         </button>
       </div>
     </div>
-   
   );
 };
 

@@ -1,39 +1,30 @@
 import { useState } from 'react';
 import { Check, Copy, Clock, X, Calendar, Edit } from 'lucide-react';
+import { useAttendance } from '../../context/AttendanceContext';
+import { useSubjects } from '../../context/SubjectContext';
 
 export default function AttendanceInput() {
-  const [attendanceStatus, setAttendanceStatus] = useState({
-    'data-structures': null,
-    'operating-systems': 'present',
-    'computer-networks': null
-  });
+  // Get attendance and subject data from context
+  const { 
+    attendanceStatus, 
+    recentEntries, 
+    attendanceHistory,
+    todaysClasses,
+    subjects: subjectsList,
+    handleAttendanceChange,
+    addAttendanceEntry,
+    updateAttendanceEntry,
+    addBulkAttendance
+  } = useAttendance();
+  
+  const { updateSubjectAttendance } = useSubjects();
 
+  // Local component state
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   
-  const [recentEntries, setRecentEntries] = useState([
-    {
-      id: 1,
-      name: 'Database Management',
-      time: 'Today, 9:00 AM',
-      status: 'present'
-    },
-    {
-      id: 2,
-      name: 'Software Engineering',
-      time: 'Yesterday, 3:00 PM',
-      status: 'absent'
-    },
-    {
-      id: 3,
-      name: 'Computer Networks',
-      time: 'Yesterday, 2:00 PM',
-      status: 'present'
-    }
-  ]);
-
   const [modalData, setModalData] = useState({
     subject: '',
     date: '',
@@ -63,28 +54,15 @@ export default function AttendanceInput() {
     date: ''
   });
 
-  const [attendanceHistory, setAttendanceHistory] = useState([
-    {
-      id: 1,
-      date: 'Nov 15, 2024',
-      subject: 'Data Structures',
-      time: '10:00 AM',
-      status: 'present'
-    },
-    {
-      id: 2,
-      date: 'Nov 14, 2024',
-      subject: 'Operating Systems',
-      time: '11:30 AM',
-      status: 'absent'
+  // Update to use context handleAttendanceChange
+  const handleAttendanceStatusChange = (classId, status) => {
+    handleAttendanceChange(classId, status);
+    
+    // Also update subject attendance in SubjectContext
+    const subject = todaysClasses.find(c => c.id === classId);
+    if (subject) {
+      updateSubjectAttendance(subject.name, status === 'present');
     }
-  ]);
-
-  const handleAttendanceChange = (classId, status) => {
-    setAttendanceStatus(prev => ({
-      ...prev,
-      [classId]: status
-    }));
   };
 
   const openModal = () => {
@@ -146,27 +124,30 @@ export default function AttendanceInput() {
 
   const handleSave = () => {
     if (modalData.subject && modalData.date) {
-      const newEntry = {
-        id: Date.now(),
-        name: modalData.subject,
-        time: `Today, ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+      // Use context method to add attendance entry
+      addAttendanceEntry({
+        subject: modalData.subject,
+        date: modalData.date,
         status: modalData.status
-      };
+      });
       
-      setRecentEntries(prev => [newEntry, ...prev.slice(0, 2)]);
+      // Also update subject attendance in SubjectContext
+      updateSubjectAttendance(modalData.subject, modalData.status === 'present');
+      
       closeModal();
     }
   };
 
   const handleEditSave = () => {
     if (editData.subject && editData.date) {
-      setAttendanceHistory(prev => 
-        prev.map(entry => 
-          entry.id === editData.id 
-            ? { ...entry, subject: editData.subject, date: editData.date, status: editData.status, time: editData.time }
-            : entry
-        )
-      );
+      // Use context method to update attendance entry
+      updateAttendanceEntry(editData.id, {
+        subject: editData.subject,
+        date: editData.date,
+        status: editData.status,
+        time: editData.time
+      });
+      
       closeEditModal();
     }
   };
@@ -176,14 +157,20 @@ export default function AttendanceInput() {
       .filter(([_, data]) => data.selected);
     
     if (selectedClasses.length > 0) {
-      const newEntries = selectedClasses.map(([className, data]) => ({
-        id: Date.now() + Math.random(),
-        name: className,
-        time: `Today, ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+      // Format data for context method
+      const entries = selectedClasses.map(([className, data]) => ({
+        className,
         status: data.status
       }));
       
-      setRecentEntries(prev => [...newEntries, ...prev].slice(0, 3));
+      // Use context method to add bulk attendance
+      addBulkAttendance(entries);
+      
+      // Also update subject attendance in SubjectContext for each entry
+      entries.forEach(entry => {
+        updateSubjectAttendance(entry.className, entry.status === 'present');
+      });
+      
       closeBulkModal();
     }
   };
@@ -214,39 +201,7 @@ export default function AttendanceInput() {
     }));
   };
 
-  const todaysClasses = [
-    {
-      id: 'data-structures',
-      name: 'Data Structures',
-      time: '10:00 AM - 11:00 AM',
-      room: 'Room 301',
-      professor: 'Prof. Johnson'
-    },
-    {
-      id: 'operating-systems',
-      name: 'Operating Systems',
-      time: '11:30 AM - 12:30 PM',
-      room: 'Room 205',
-      professor: 'Prof. Smith'
-    },
-    {
-      id: 'computer-networks',
-      name: 'Computer Networks',
-      time: '2:00 PM - 3:00 PM',
-      room: 'Room 102',
-      professor: 'Prof. Davis'
-    }
-  ];
-
-  const subjects = [
-    'Data Structures',
-    'Operating Systems',
-    'Computer Networks',
-    'Database Management',
-    'Software Engineering',
-    'Computer Graphics',
-    'Machine Learning'
-  ];
+  // We now get todaysClasses and subjects from context
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -332,13 +287,13 @@ export default function AttendanceInput() {
                         ) : (
                           <>
                             <button
-                              onClick={() => handleAttendanceChange(classItem.id, 'present')}
+                              onClick={() => handleAttendanceStatusChange(classItem.id, 'present')}
                               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md font-medium transition-colors duration-200"
                             >
                               Present
                             </button>
                             <button
-                              onClick={() => handleAttendanceChange(classItem.id, 'absent')}
+                              onClick={() => handleAttendanceStatusChange(classItem.id, 'absent')}
                               className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md font-medium transition-colors duration-200"
                             >
                               Absent

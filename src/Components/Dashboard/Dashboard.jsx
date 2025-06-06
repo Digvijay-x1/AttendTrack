@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useAttendance } from '../../context/AttendanceContext';
+import { useSubjects } from '../../context/SubjectContext';
 
 const Dashboard = () => {
+  const { attendanceHistory } = useAttendance();
+  const { subjects } = useSubjects();
+  
   const [isVisible, setIsVisible] = useState(false);
   const [animateChart, setAnimateChart] = useState(false);
   const [hoveredSegment, setHoveredSegment] = useState(null);
@@ -10,24 +15,63 @@ const Dashboard = () => {
     setTimeout(() => setAnimateChart(true), 200);
   }, []);
 
-  // Sample data for the line chart
-  const attendanceData = [
-    { week: 'Week 1', attendance: 78 },
-    { week: 'Week 2', attendance: 82 },
-    { week: 'Week 3', attendance: 79 },
-    { week: 'Week 4', attendance: 85 },
-    { week: 'Week 5', attendance: 81 },
-    { week: 'Week 6', attendance: 83 }
-  ];
+  // Generate line chart data from attendance history
+  const generateAttendanceData = () => {
+    // Group by week and calculate average
+    const weeks = {};
+    const now = new Date();
+    
+    // Last 6 weeks
+    for (let i = 0; i < 6; i++) {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - (i * 7));
+      const weekLabel = `Week ${6-i}`;
+      weeks[weekLabel] = { count: 0, present: 0 };
+    }
+    
+    // Process attendance history
+    attendanceHistory.forEach(entry => {
+      const entryDate = new Date(entry.date);
+      const diffTime = Math.abs(now - entryDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const weekNum = Math.floor(diffDays / 7) + 1;
+      
+      if (weekNum <= 6) {
+        const weekLabel = `Week ${6-weekNum+1}`;
+        if (weeks[weekLabel]) {
+          weeks[weekLabel].count++;
+          if (entry.status === 'present') {
+            weeks[weekLabel].present++;
+          }
+        }
+      }
+    });
+    
+    // Calculate percentages
+    return Object.entries(weeks).map(([week, data]) => ({
+      week,
+      attendance: data.count > 0 ? Math.round((data.present / data.count) * 100) : 80 // fallback value
+    }));
+  };
+  
+  const attendanceData = generateAttendanceData();
 
-  // Subject data for pie chart with attendance numbers
-  const subjectData = [
-    { name: 'Data Structures', percentage: 25, color: '#10B981', attended: 88, total: 100 },
-    { name: 'Operating Systems', percentage: 23, color: '#3B82F6', attended: 76, total: 85 },
-    { name: 'Computer Networks', percentage: 18, color: '#EF4444', attended: 65, total: 90 },
-    { name: 'Database Management', percentage: 20, color: '#8B5CF6', attended: 72, total: 80 },
-    { name: 'Software Engineering', percentage: 14, color: '#F59E0B', attended: 54, total: 70 }
-  ];
+  // Transform subjects data for pie chart
+  const generateSubjectData = () => {
+    return subjects.map((subject, index) => {
+      // Assign fixed colors
+      const colors = ['#10B981', '#3B82F6', '#EF4444', '#8B5CF6', '#F59E0B', '#06B6D4', '#EC4899'];
+      return {
+        name: subject.name,
+        percentage: subject.attendance / 5, // Scale for pie chart
+        color: colors[index % colors.length],
+        attended: subject.attended,
+        total: subject.totalClasses
+      };
+    });
+  };
+  
+  const subjectData = generateSubjectData();
 
   // Calculate pie chart segments
   const calculatePieSegments = () => {

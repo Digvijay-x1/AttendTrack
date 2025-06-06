@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, Zap, Plus, Check, Trash2 } from 'lucide-react';
+import { useSubjects } from '../../context/SubjectContext';
 
 const CalculatorComp = () => {
+  // Get subjects from context
+  const { subjects: contextSubjects } = useSubjects();
+  
   // Main calculator state
   const [selectedSubject, setSelectedSubject] = useState('');
   const [targetAttendance, setTargetAttendance] = useState(75);
@@ -27,14 +31,21 @@ const CalculatorComp = () => {
     85: { needed: 0, canMiss: 0 }
   });
 
-  // Subject data
-  const [subjects] = useState([
-    { name: 'Data Structures', current: '29/34', percentage: 85, status: 'achieved', id: 'default-1' },
-    { name: 'Operating Systems', current: '22/25', percentage: 88, status: 'achieved', id: 'default-2' },
-    { name: 'Computer Networks', current: '21/29', percentage: 72, status: 'critical', id: 'default-3' },
-    { name: 'Database Management', current: '27/30', percentage: 90, status: 'achieved', id: 'default-4' },
-    { name: 'Software Engineering', current: '19/25', percentage: 76, status: 'achieved', id: 'default-5' }
-  ]);
+  // Convert context subjects to the format needed by calculator
+  const [subjects, setSubjects] = useState([]);
+  
+  // Update subjects when context subjects change
+  useEffect(() => {
+    const formattedSubjects = contextSubjects.map(subject => ({
+      name: subject.name,
+      current: `${subject.attended}/${subject.totalClasses}`,
+      percentage: subject.attendance,
+      status: subject.attendance >= 75 ? 'achieved' : 'critical',
+      id: `subject-${subject.id}`
+    }));
+    
+    setSubjects(formattedSubjects);
+  }, [contextSubjects]);
 
   const [customSubjects, setCustomSubjects] = useState([]);
   

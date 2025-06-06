@@ -1,18 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, GraduationCap, Bell, Shield, Camera, Mail, Calendar, Phone } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 const ProfileSettings = () => {
+  const { user, updateUser } = useApp();
   const [activeTab, setActiveTab] = useState('Profile');
   const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@college.edu',
-    phone: '+1 (555) 123-4567',
-    dateOfBirth: '01/15/2000',
-    bio: 'Computer Science student passionate about technology and learning.'
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    bio: ''
   });
 
-  const [profileImage, setProfileImage] = useState('/api/placeholder/150/150');
+  const [profileImage, setProfileImage] = useState('');
+  
+  // Initialize profile data from context
+  useEffect(() => {
+    if (user) {
+      const nameParts = user.name.split(' ');
+      setProfileData({
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: user.email || '',
+        phone: user.phone || '+1 (555) 123-4567',
+        dateOfBirth: user.dateOfBirth || '01/15/2000',
+        bio: user.bio || 'Computer Science student passionate about technology and learning.'
+      });
+      setProfileImage(user.profileImage || '/api/placeholder/150/150');
+    }
+  }, [user]);
 
   const tabs = [
     { name: 'Profile', icon: User },
@@ -29,7 +47,17 @@ const ProfileSettings = () => {
   };
 
   const handleSaveChanges = () => {
-    // Handle save logic here
+    // Update user in context
+    updateUser({
+      name: `${profileData.firstName} ${profileData.lastName}`,
+      email: profileData.email,
+      phone: profileData.phone,
+      dateOfBirth: profileData.dateOfBirth,
+      bio: profileData.bio,
+      profileImage: profileImage
+    });
+    
+    // Show success message
     alert('Changes saved successfully!');
   };
 

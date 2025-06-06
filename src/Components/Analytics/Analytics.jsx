@@ -1,6 +1,76 @@
 import { TrendingUp, CheckCircle, X, Star, ChevronDown } from 'lucide-react';
+import { useAttendance } from '../../context/AttendanceContext';
+import { useSubjects } from '../../context/SubjectContext';
+import { useEffect, useState } from 'react';
 
 const Analytics = () => {
+  const { attendanceHistory } = useAttendance();
+  const { subjects, avgAttendance } = useSubjects();
+  
+  // Calculate statistics based on context data
+  const [stats, setStats] = useState({
+    overallAttendance: 0,
+    classesAttended: 0,
+    classesMissed: 0,
+    totalClasses: 0,
+    bestSubject: { name: '', attendance: 0 },
+    weeklyPattern: [],
+    timeSlotAnalysis: [],
+    monthlySummary: { best: {}, lowest: {}, current: {}, improvement: 0 }
+  });
+  
+  useEffect(() => {
+    // Calculate overall stats
+    const totalClasses = subjects.reduce((sum, subject) => sum + subject.totalClasses, 0);
+    const classesAttended = subjects.reduce((sum, subject) => sum + subject.attended, 0);
+    const classesMissed = totalClasses - classesAttended;
+    
+    // Find best subject
+    let bestSubject = { name: '', attendance: 0 };
+    subjects.forEach(subject => {
+      if (subject.attendance > bestSubject.attendance) {
+        bestSubject = { name: subject.name, attendance: subject.attendance };
+      }
+    });
+    
+    // Calculate weekly pattern (using sample data for now)
+    const weeklyPattern = [
+      { day: 'Monday', percentage: 85, color: 'bg-green-600' },
+      { day: 'Tuesday', percentage: 90, color: 'bg-green-600' },
+      { day: 'Wednesday', percentage: 75, color: 'bg-yellow-600' },
+      { day: 'Thursday', percentage: 88, color: 'bg-green-600' },
+      { day: 'Friday', percentage: 65, color: 'bg-red-600' }
+    ];
+    
+    // Calculate time slot analysis (using sample data for now)
+    const timeSlotAnalysis = [
+      { time: '8:00 - 10:00 AM', percentage: 92, color: 'bg-green-600' },
+      { time: '10:00 - 12:00 PM', percentage: 88, color: 'bg-green-600' },
+      { time: '12:00 - 2:00 PM', percentage: 78, color: 'bg-yellow-600' },
+      { time: '2:00 - 4:00 PM', percentage: 70, color: 'bg-red-600' },
+      { time: '4:00 - 6:00 PM', percentage: 65, color: 'bg-red-600' }
+    ];
+    
+    // Monthly summary (using sample data for now)
+    const monthlySummary = {
+      best: { month: 'September 2024', percentage: 94 },
+      lowest: { month: 'November 2024', percentage: 68 },
+      current: { month: 'December 2024', percentage: 82 },
+      improvement: 7
+    };
+    
+    setStats({
+      overallAttendance: avgAttendance,
+      classesAttended,
+      classesMissed,
+      totalClasses,
+      bestSubject,
+      weeklyPattern,
+      timeSlotAnalysis,
+      monthlySummary
+    });
+  }, [subjects, avgAttendance]);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -33,7 +103,7 @@ const Analytics = () => {
             <div className="flex items-center justify-between mb-4 ">
               <div>
                 <h3 className="text-gray-600 font-medium">Overall Attendance</h3>
-               <div className="text-3xl font-bold text-blue-600 mb-2">82.5%</div>
+               <div className="text-3xl font-bold text-blue-600 mb-2">{stats.overallAttendance}%</div>
               </div>
               
                <div className="bg-blue-50 p-2 rounded-lg">
@@ -53,7 +123,7 @@ const Analytics = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-gray-600 font-medium">Classes Attended</h3>
-              <div className="text-3xl font-bold text-green-600 mb-2">128</div>
+              <div className="text-3xl font-bold text-green-600 mb-2">{stats.classesAttended}</div>
               </div>
               
               <div className="bg-green-50 p-2 rounded-lg">
@@ -61,7 +131,7 @@ const Analytics = () => {
               </div>
             </div>
             
-            <div className="text-sm text-gray-600">Out of 156 total</div>
+            <div className="text-sm text-gray-600">Out of {stats.totalClasses} total</div>
           </div>
 
           {/* Classes Missed */}
@@ -69,7 +139,7 @@ const Analytics = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-gray-600 font-medium">Classes Missed</h3>
-              <div className="text-3xl font-bold text-red-600 mb-2">28</div>
+              <div className="text-3xl font-bold text-red-600 mb-2">{stats.classesMissed}</div>
               </div>
               
               <div className="bg-red-50 p-2 rounded-lg">
@@ -77,7 +147,9 @@ const Analytics = () => {
               </div>
             </div>
             
-            <div className="text-sm text-gray-600">17.9% absence rate</div>
+            <div className="text-sm text-gray-600">
+              {stats.totalClasses > 0 ? ((stats.classesMissed / stats.totalClasses) * 100).toFixed(1) : 0}% absence rate
+            </div>
           </div>
 
           {/* Best Subject */}
@@ -85,7 +157,7 @@ const Analytics = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-gray-600 font-medium">Best Subject</h3>
-              <div className="text-xl font-bold text-purple-600 mb-1">Database Mgmt</div>
+              <div className="text-xl font-bold text-purple-600 mb-1">{stats.bestSubject.name}</div>
               </div>
               
               <div className="bg-purple-50 p-2 rounded-lg">
@@ -93,7 +165,7 @@ const Analytics = () => {
               </div>
             </div>
             
-            <div className="text-sm text-gray-600">90% attendance</div>
+            <div className="text-sm text-gray-600">{stats.bestSubject.attendance}% attendance</div>
           </div>
         </div>
 
@@ -103,13 +175,7 @@ const Analytics = () => {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="text-xl font-semibold text-gray-900 mb-6">Weekly Pattern</h3>
             <div className="space-y-4">
-              {[
-                { day: 'Monday', percentage: 85, color: 'bg-green-600' },
-                { day: 'Tuesday', percentage: 90, color: 'bg-green-600' },
-                { day: 'Wednesday', percentage: 75, color: 'bg-yellow-600' },
-                { day: 'Thursday', percentage: 88, color: 'bg-green-600' },
-                { day: 'Friday', percentage: 65, color: 'bg-red-600' }
-              ].map((item) => (
+              {stats.weeklyPattern.map((item) => (
                 <div key={item.day} className="flex items-center justify-between">
                   <span className="text-gray-700 font-medium w-20">{item.day}</span>
                   <div className="flex-1 mx-4">
@@ -130,13 +196,7 @@ const Analytics = () => {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="text-xl font-semibold text-gray-900 mb-6">Time Slot Analysis</h3>
             <div className="space-y-4">
-              {[
-                { time: '8:00 - 10:00 AM', percentage: 92, color: 'bg-green-600' },
-                { time: '10:00 - 12:00 PM', percentage: 88, color: 'bg-green-600' },
-                { time: '12:00 - 2:00 PM', percentage: 78, color: 'bg-yellow-600' },
-                { time: '2:00 - 4:00 PM', percentage: 70, color: 'bg-red-600' },
-                { time: '4:00 - 6:00 PM', percentage: 65, color: 'bg-red-600' }
-              ].map((item) => (
+              {stats.timeSlotAnalysis.map((item) => (
                 <div key={item.time} className="flex items-center justify-between">
                   <span className="text-gray-700 font-medium w-28 text-sm">{item.time}</span>
                   <div className="flex-1 mx-4">
@@ -161,39 +221,39 @@ const Analytics = () => {
               <div className="flex justify-between bg-green-50 rounded-lg p-4">
                 <div>
                   <div className="text-sm text-green-700 font-medium mb-1">Best Month</div>
-                <div className="text-sm text-green-600 mb-2">September 2024</div>
+                  <div className="text-sm text-green-600 mb-2">{stats.monthlySummary.best.month}</div>
                 </div>
                 
-                <div className="text-2xl font-bold text-green-700">94%</div>
+                <div className="text-2xl font-bold text-green-700">{stats.monthlySummary.best.percentage}%</div>
               </div>
 
               {/* Lowest Month */}
               <div className="flex justify-between bg-red-50 rounded-lg p-4">
                 <div>
                   <div className="text-sm text-red-700 font-medium mb-1">Lowest Month</div>
-                <div className="text-sm text-red-600 mb-2">November 2024</div>
+                  <div className="text-sm text-red-600 mb-2">{stats.monthlySummary.lowest.month}</div>
                 </div>
                 
-                <div className="text-2xl font-bold text-red-700">68%</div>
+                <div className="text-2xl font-bold text-red-700">{stats.monthlySummary.lowest.percentage}%</div>
               </div>
 
               {/* Current Month */}
               <div className="flex justify-between bg-blue-50 rounded-lg p-4">
                 <div>
                   <div className="text-sm text-blue-700 font-medium mb-1">Current Month</div>
-                <div className="text-sm text-blue-600 mb-2">December 2024</div>
+                  <div className="text-sm text-blue-600 mb-2">{stats.monthlySummary.current.month}</div>
                 </div>
                 
-                <div className="text-2xl font-bold text-blue-700">82%</div>
+                <div className="text-2xl font-bold text-blue-700">{stats.monthlySummary.current.percentage}%</div>
               </div>
 
               {/* Improvement Needed */}
               <div className="mt-4">
                 <div className="text-sm text-gray-600 mb-2">Improvement Needed</div>
                 <div className="bg-gray-200 rounded-full h-2 mb-1">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '7%' }}></div>
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${stats.monthlySummary.improvement}%` }}></div>
                 </div>
-                <div className="text-sm text-gray-600">7% to reach 89%</div>
+                <div className="text-sm text-gray-600">{stats.monthlySummary.improvement}% to reach 89%</div>
               </div>
             </div>
           </div>

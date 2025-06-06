@@ -1,7 +1,25 @@
 import { useState } from 'react';
 import { Plus, Edit, Trash2, Book, Users, Clock, BarChart3 } from 'lucide-react';
+import { useSubjects } from '../../context/SubjectContext';
+import { useAttendance } from '../../context/AttendanceContext';
 
 export default function SubjectManagement() {
+  // Get subjects and related functions from context
+  const { 
+    subjects, 
+    totalSubjects, 
+    activeSubjects, 
+    weeklyClasses, 
+    avgAttendance,
+    addSubject,
+    updateSubject,
+    deleteSubject
+  } = useSubjects();
+  
+  // Get the setSubjects function from attendance context to keep subject lists in sync
+  const { setSubjects: updateAttendanceSubjects } = useAttendance();
+  
+  // Form state
   const [subName, setSubName] = useState('');
   const [subCode, setSubCode] = useState('');
   const [professor, setProfessor] = useState('');
@@ -11,78 +29,6 @@ export default function SubjectManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingSubject, setEditingSubject] = useState(null);
-  const [subjects, setSubjects] = useState([
-    {
-      id: 1,
-      name: 'Data Structures',
-      code: 'CS301',
-      professor: 'Prof. Johnson',
-      schedule: 'Mon, Wed, Fri • 10:00 AM',
-      totalClasses: 34,
-      attended: 29,
-      attendance: 85,
-      status: 'Above 75%',
-      color: 'green'
-    },
-    {
-      id: 2,
-      name: 'Operating Systems',
-      code: 'CS302',
-      professor: 'Prof. Smith',
-      schedule: 'Tue, Thu • 11:30 AM',
-      totalClasses: 25,
-      attended: 22,
-      attendance: 88,
-      status: 'Above 75%',
-      color: 'blue'
-    },
-    {
-      id: 3,
-      name: 'Computer Networks',
-      code: 'CS303',
-      professor: 'Prof. Davis',
-      schedule: 'Mon, Wed • 2:00 PM',
-      totalClasses: 29,
-      attended: 21,
-      attendance: 72,
-      status: 'Below 75%',
-      color: 'red'
-    },
-    {
-      id: 4,
-      name: 'Database Management',
-      code: 'CS304',
-      professor: 'Prof. Wilson',
-      schedule: 'Tue, Fri • 9:00 AM',
-      totalClasses: 30,
-      attended: 27,
-      attendance: 90,
-      status: 'Above 75%',
-      color: 'green'
-    },
-    {
-      id: 5,
-      name: 'Software Engineering',
-      code: 'CS305',
-      professor: 'Prof. Brown',
-      schedule: 'Thu, Fri • 3:00 PM',
-      totalClasses: 25,
-      attended: 19,
-      attendance: 76,
-      status: 'Just Above 75%',
-      color: 'yellow'
-    }
-  ]);
-
-  const totalSubjects = subjects.length;
-  const activeSubjects = subjects.length;
-  const weeklyClasses = subjects.reduce((total, subject) => {
-    const days = subject.schedule.split('•')[0].split(',').length;
-    return total + days;
-  }, 0);
-  const avgAttendance = Math.round(
-    subjects.reduce((total, subject) => total + subject.attendance, 0) / subjects.length
-  );
 
   const getProgressBarColor = (attendance) => {
     if (attendance >= 90) return 'bg-green-500';
@@ -100,20 +46,17 @@ export default function SubjectManagement() {
   const handleAddSubject = () => {
     if (subName.trim() === '') return;
     
-    const newSubject = {
-      id: subjects.length + 1,
+    // Use context method to add subject
+    addSubject({
       name: subName,
       code: subCode,
       professor: professor,
-      schedule: schedule,
-      totalClasses: 0,
-      attended: 0,
-      attendance: 0,
-      status: 'New',
-      color: 'gray'
-    };
+      schedule: schedule
+    });
     
-    setSubjects([...subjects, newSubject]);
+    // Update available subjects in attendance context
+    updateAttendanceSubjects(prev => [...prev, subName]);
+    
     resetForm();
   };
 
@@ -131,32 +74,22 @@ export default function SubjectManagement() {
   const handleUpdateSubject = () => {
     if (subName.trim() === '' || !editingSubject) return;
     
-    const totalClassesNum = parseInt(totalClasses) || 0;
-    const attendedNum = parseInt(attended) || 0;
-    const attendancePercentage = totalClassesNum > 0 ? Math.round((attendedNum / totalClassesNum) * 100) : 0;
-    
-    let status = 'New';
-    if (totalClassesNum > 0) {
-      if (attendancePercentage >= 85) status = 'Above 75%';
-      else if (attendancePercentage >= 75) status = 'Just Above 75%';
-      else status = 'Below 75%';
-    }
-    
-    const updatedSubject = {
-      ...editingSubject,
+    // Use context method to update subject
+    updateSubject(editingSubject.id, {
       name: subName,
       code: subCode,
       professor: professor,
       schedule: schedule,
-      totalClasses: totalClassesNum,
-      attended: attendedNum,
-      attendance: attendancePercentage,
-      status: status
-    };
+      totalClasses,
+      attended
+    });
     
-    setSubjects(subjects.map(subject => 
-      subject.id === editingSubject.id ? updatedSubject : subject
-    ));
+    // If the name changed, update in attendance subjects list
+    if (editingSubject.name !== subName) {
+      updateAttendanceSubjects(prev => 
+        prev.map(subject => subject === editingSubject.name ? subName : subject)
+      );
+    }
     
     resetForm();
     setShowEditModal(false);
@@ -174,7 +107,18 @@ export default function SubjectManagement() {
   };
 
   const handleDeleteSubject = (id) => {
-    setSubjects(subjects.filter(subject => subject.id !== id));
+    // Find the subject before deleting to get its name
+    const subjectToDelete = subjects.find(subject => subject.id === id);
+    
+    // Use context method to delete subject
+    deleteSubject(id);
+    
+    // Also remove from attendance subjects list if found
+    if (subjectToDelete) {
+      updateAttendanceSubjects(prev => 
+        prev.filter(subject => subject !== subjectToDelete.name)
+      );
+    }
   };
 
   return (

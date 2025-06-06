@@ -11,6 +11,7 @@ import Analytics from './Components/Analytics/Analytics.jsx'
 import Alert from './Components/Alert/Alert.jsx'
 import CalculatorComp from './Components/Calculator/Calculator.jsx'
 import ProfileSettings from './Components/ProfileSettings/ProfileSettings.jsx'
+import { AppProvider } from './context/AppContext.jsx'
 
 const router = createBrowserRouter([
   {
@@ -51,6 +52,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <AppProvider>
+      <RouterProvider router={router} />
+    </AppProvider>
   </StrictMode>,
 )

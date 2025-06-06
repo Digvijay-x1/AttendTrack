@@ -1,46 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Info, Bell, X, Settings } from 'lucide-react';
+import { useSubjects } from '../../context/SubjectContext';
 
 const Alert = () => {
-  const [alerts, setAlerts] = useState([
-    {
-      id: 1,
-      type: 'Critical',
-      title: 'Computer Networks - Critical Attendance Alert',
-      message: 'Your attendance has dropped to 72%. You need to attend 3 more classes to reach 75%.',
-      time: '2 hours ago',
-      subject: 'Computer Networks',
-      actions: ['View Subject', 'Calculate Required']
-    },
-    {
-      id: 2,
-      type: 'Critical',
-      title: 'Attendance Goal Not Met',
-      message: 'Your overall attendance has fallen below the 75% requirement. Immediate action needed.',
-      time: '1 day ago',
-      actions: ['View Dashboard', 'Create Action Plan']
-    },
-    {
-      id: 3,
-      type: 'Warning',
-      title: 'Software Engineering - Approaching Threshold',
-      message: "Your attendance is at 76%. Don't miss more than 1 class to stay above 75%.",
-      time: '3 hours ago',
-      subject: 'Software Engineering',
-      actions: ['View Subject', 'Set Reminder']
-    },
-    {
-      id: 4,
-      type: 'Info',
-      title: 'Weekly Attendance Summary',
-      message: 'You attended 18 out of 20 classes this week (90% attendance). Great job!',
-      time: '1 day ago',
-      actions: ['View Report']
+  const { subjects } = useSubjects();
+  
+  // Generate alerts based on subject data
+  const [alerts, setAlerts] = useState([]);
+  
+  useEffect(() => {
+    const newAlerts = [];
+    let alertId = 1;
+    
+    // Generate critical alerts for subjects with attendance below 75%
+    subjects.forEach(subject => {
+      if (subject.attendance < 75) {
+        // Calculate how many classes needed to reach 75%
+        const totalClasses = subject.totalClasses;
+        const currentAttended = subject.attended;
+        const requiredAttendance = Math.ceil(totalClasses * 0.75);
+        const classesNeeded = requiredAttendance - currentAttended;
+        
+        newAlerts.push({
+          id: alertId++,
+          type: 'Critical',
+          title: `${subject.name} - Critical Attendance Alert`,
+          message: `Your attendance has dropped to ${subject.attendance}%. You need to attend ${classesNeeded} more classes to reach 75%.`,
+          time: '2 hours ago',
+          subject: subject.name,
+          actions: ['View Subject', 'Calculate Required']
+        });
+      }
+      // Generate warning alerts for subjects with attendance between 75% and 80%
+      else if (subject.attendance < 80) {
+        // Calculate how many classes can be missed while staying above 75%
+        const totalClasses = subject.totalClasses;
+        const currentAttended = subject.attended;
+        const minimumRequired = Math.ceil(totalClasses * 0.75);
+        const canMiss = currentAttended - minimumRequired;
+        
+        newAlerts.push({
+          id: alertId++,
+          type: 'Warning',
+          title: `${subject.name} - Approaching Threshold`,
+          message: `Your attendance is at ${subject.attendance}%. Don't miss more than ${canMiss} class(es) to stay above 75%.`,
+          time: '3 hours ago',
+          subject: subject.name,
+          actions: ['View Subject', 'Set Reminder']
+        });
+      }
+    });
+    
+    // If overall attendance is below 75%, add a critical alert
+    const overallAttendance = subjects.reduce((sum, subject) => sum + subject.attendance, 0) / subjects.length;
+    if (overallAttendance < 75) {
+      newAlerts.push({
+        id: alertId++,
+        type: 'Critical',
+        title: 'Attendance Goal Not Met',
+        message: `Your overall attendance has fallen below the 75% requirement (${Math.round(overallAttendance)}%). Immediate action needed.`,
+        time: '1 day ago',
+        actions: ['View Dashboard', 'Create Action Plan']
+      });
     }
-  ]);
+    
+    // Add info alert for good attendance
+    if (overallAttendance > 85) {
+      newAlerts.push({
+        id: alertId++,
+        type: 'Info',
+        title: 'Weekly Attendance Summary',
+        message: `Your overall attendance is ${Math.round(overallAttendance)}%. Great job!`,
+        time: '1 day ago',
+        actions: ['View Report']
+      });
+    }
+    
+    setAlerts(newAlerts);
+    setUnreadAlerts(newAlerts.map(alert => alert.id));
+  }, [subjects]);
 
   const [activeTab, setActiveTab] = useState('All Alerts');
-  const [unreadAlerts, setUnreadAlerts] = useState([1, 2, 3, 4]);
+  const [unreadAlerts, setUnreadAlerts] = useState([]);
 
   const dismissAlert = (alertId) => {
     setAlerts(alerts.filter(alert => alert.id !== alertId));
