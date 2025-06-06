@@ -7,7 +7,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     setIsVisible(true);
-    setTimeout(() => setAnimateChart(true), 500);
+    setTimeout(() => setAnimateChart(true), 200);
   }, []);
 
   // Sample data for the line chart
