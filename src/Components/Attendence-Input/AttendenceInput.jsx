@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Copy, Clock, X, Calendar } from 'lucide-react';
+import { Check, Copy, Clock, X, Calendar, Edit } from 'lucide-react';
 
 export default function AttendanceInput() {
   const [attendanceStatus, setAttendanceStatus] = useState({
@@ -11,19 +11,23 @@ export default function AttendanceInput() {
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const [recentEntries, setRecentEntries] = useState([
     {
+      id: 1,
       name: 'Database Management',
       time: 'Today, 9:00 AM',
       status: 'present'
     },
     {
+      id: 2,
       name: 'Software Engineering',
       time: 'Yesterday, 3:00 PM',
       status: 'absent'
     },
     {
+      id: 3,
       name: 'Computer Networks',
       time: 'Yesterday, 2:00 PM',
       status: 'present'
@@ -33,6 +37,14 @@ export default function AttendanceInput() {
   const [modalData, setModalData] = useState({
     subject: '',
     date: '',
+    status: 'present'
+  });
+
+  const [editData, setEditData] = useState({
+    id: null,
+    date: '',
+    subject: '',
+    time: '',
     status: 'present'
   });
 
@@ -51,14 +63,16 @@ export default function AttendanceInput() {
     date: ''
   });
 
-  const [attendanceHistory] = useState([
+  const [attendanceHistory, setAttendanceHistory] = useState([
     {
+      id: 1,
       date: 'Nov 15, 2024',
       subject: 'Data Structures',
       time: '10:00 AM',
       status: 'present'
     },
     {
+      id: 2,
       date: 'Nov 14, 2024',
       subject: 'Operating Systems',
       time: '11:30 AM',
@@ -103,6 +117,17 @@ export default function AttendanceInput() {
     });
   };
 
+  const openEditModal = (entry) => {
+    setEditData({
+      id: entry.id,
+      date: entry.date,
+      subject: entry.subject,
+      time: entry.time,
+      status: entry.status
+    });
+    setShowEditModal(true);
+  };
+
   const closeModal = () => {
     setShowModal(false);
   };
@@ -115,9 +140,14 @@ export default function AttendanceInput() {
     setShowHistoryModal(false);
   };
 
+  const closeEditModal = () => {
+    setShowEditModal(false);
+  };
+
   const handleSave = () => {
     if (modalData.subject && modalData.date) {
       const newEntry = {
+        id: Date.now(),
         name: modalData.subject,
         time: `Today, ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
         status: modalData.status
@@ -128,12 +158,26 @@ export default function AttendanceInput() {
     }
   };
 
+  const handleEditSave = () => {
+    if (editData.subject && editData.date) {
+      setAttendanceHistory(prev => 
+        prev.map(entry => 
+          entry.id === editData.id 
+            ? { ...entry, subject: editData.subject, date: editData.date, status: editData.status, time: editData.time }
+            : entry
+        )
+      );
+      closeEditModal();
+    }
+  };
+
   const handleBulkSave = () => {
     const selectedClasses = Object.entries(bulkData.classes)
       .filter(([_, data]) => data.selected);
     
     if (selectedClasses.length > 0) {
       const newEntries = selectedClasses.map(([className, data]) => ({
+        id: Date.now() + Math.random(),
         name: className,
         time: `Today, ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
         status: data.status
@@ -281,6 +325,10 @@ export default function AttendanceInput() {
                           <span className="px-4 py-2 bg-green-100 text-green-800 rounded-md font-medium">
                             Present
                           </span>
+                        ) : attendanceStatus[classItem.id] === 'absent' ? (
+                          <span className="px-4 py-2 bg-red-100 text-red-800 rounded-md font-medium">
+                            Absent
+                          </span>
                         ) : (
                           <>
                             <button
@@ -344,11 +392,11 @@ export default function AttendanceInput() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div 
-            className="absolute inset-0 bg-black/50   transition-opacity duration-300 animate-in fade-in"
+            className="absolute inset-0 bg-black/50 transition-opacity duration-300"
             onClick={closeModal}
           ></div>
           
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-500 animate-in zoom-in-95 slide-in-from-bottom-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-500">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900">Quick Mark Attendance</h2>
               <button
@@ -440,15 +488,129 @@ export default function AttendanceInput() {
         </div>
       )}
 
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div 
+            className="absolute inset-0 bg-black/50 transition-opacity duration-300"
+            onClick={closeEditModal}
+          ></div>
+          
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-500">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900">Edit Attendance</h2>
+              <button
+                onClick={closeEditModal}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+              >
+                <X className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subject
+                </label>
+                <select
+                  value={editData.subject}
+                  onChange={(e) => setEditData(prev => ({...prev, subject: e.target.value}))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                >
+                  <option value="">Select Subject</option>
+                  {subjects.map((subject) => (
+                    <option key={subject} value={subject}>{subject}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={editData.date}
+                    onChange={(e) => setEditData(prev => ({...prev, date: e.target.value}))}
+                    placeholder="e.g., Nov 15, 2024"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  />
+                  <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Time
+                </label>
+                <input
+                  type="text"
+                  value={editData.time}
+                  onChange={(e) => setEditData(prev => ({...prev, time: e.target.value}))}
+                  placeholder="e.g., 10:00 AM"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Status
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="editStatus"
+                      value="present"
+                      checked={editData.status === 'present'}
+                      onChange={(e) => setEditData(prev => ({...prev, status: e.target.value}))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Present</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="editStatus"
+                      value="absent"
+                      checked={editData.status === 'absent'}
+                      onChange={(e) => setEditData(prev => ({...prev, status: e.target.value}))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Absent</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-6 border-t border-gray-100">
+              <button
+                onClick={closeEditModal}
+                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditSave}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bulk Entry Modal */}
       {showBulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div 
-            className="absolute inset-0 bg-black/50   transition-opacity duration-300 animate-in fade-in"
+            className="absolute inset-0 bg-black/50 transition-opacity duration-300"
             onClick={closeBulkModal}
           ></div>
           
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all duration-500 animate-in zoom-in-95 slide-in-from-bottom-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all duration-500">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900">Bulk Attendance Entry</h2>
               <button
@@ -540,11 +702,11 @@ export default function AttendanceInput() {
       {showHistoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div 
-            className="absolute inset-0 bg-black/50   transition-opacity duration-300 animate-in fade-in"
+            className="absolute inset-0 bg-black/50 transition-opacity duration-300"
             onClick={closeHistoryModal}
           ></div>
           
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 transform transition-all duration-500 animate-in zoom-in-95 slide-in-from-bottom-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 transform transition-all duration-500">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900">Attendance History</h2>
               <button
@@ -606,7 +768,14 @@ export default function AttendanceInput() {
                           </span>
                         </td>
                         <td className="py-4 px-4">
-                          <button className="text-blue-600 hover:text-blue-800 font-medium">
+                          <button 
+                            onClick={() => {
+                              closeHistoryModal();
+                              openEditModal(entry);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                          >
+                            <Edit className="h-4 w-4" />
                             Edit
                           </button>
                         </td>

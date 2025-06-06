@@ -133,45 +133,59 @@ const Alert = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-red-50 border border-red-100 rounded-xl p-6">
           <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{counts.critical}</div>
+          <div className="text-sm font-medium text-gray-900 mb-1">Critical Alerts</div>
+            </div>
+            
             <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-red-500" />
             </div>
+            
           </div>
-          <div className="text-2xl font-bold text-gray-900 mb-1">{counts.critical}</div>
-          <div className="text-sm font-medium text-gray-900 mb-1">Critical Alerts</div>
+          
           <div className="text-sm text-gray-600">Below 75% threshold</div>
         </div>
 
         <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-6">
           <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{counts.warning}</div>
+          <div className="text-sm font-medium text-gray-900 mb-1">Warning Alerts</div>
+            </div>
             <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-yellow-500" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-gray-900 mb-1">{counts.warning}</div>
-          <div className="text-sm font-medium text-gray-900 mb-1">Warning Alerts</div>
+          
           <div className="text-sm text-gray-600">Close to threshold</div>
         </div>
 
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
           <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{counts.info}</div>
+              <div className="text-sm font-medium text-gray-900 mb-1">Info Alerts</div>
+            </div>
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <Info className="w-5 h-5 text-blue-500" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-gray-900 mb-1">{counts.info}</div>
-          <div className="text-sm font-medium text-gray-900 mb-1">Info Alerts</div>
+          
           <div className="text-sm text-gray-600">General updates</div>
         </div>
 
-        <div className="bg-gray-50 border border-gray-100 rounded-xl p-6">
+        <div className="bg-gray-100 border border-gray-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{counts.unread}</div>
+              <div className="text-sm font-medium text-gray-900 mb-1">Unread</div>
+            </div>
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
               <Bell className="w-5 h-5 text-gray-500" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-gray-900 mb-1">{counts.unread}</div>
-          <div className="text-sm font-medium text-gray-900 mb-1">Unread</div>
+          
           <div className="text-sm text-gray-600">Require attention</div>
         </div>
       </div>
